@@ -2,7 +2,7 @@
 theme: cyanosis
 ---
 
-这是 THREE.js 官方的一个经典示例，改用 webgl 实现，通过这个示例来更好地学会在 webgl 画点
+这是 THREE.js 官方的一个经典示例，改用 webgl 实现，通过这个示例来更好地学会在 webgl 画粒子点
 
 ## Three.js 官方示例-波浪点
 
@@ -47,6 +47,8 @@ function loadShader(gl, type, source) {
 }
 ```
 
+### 顶点着色器
+
 ```c++
        attribute vec3 position;
             attribute float scale;
@@ -62,6 +64,8 @@ function loadShader(gl, type, source) {
           vColor=color;
       }
 ```
+
+### 片元着色器
 
 ```c++
 precision highp float;
