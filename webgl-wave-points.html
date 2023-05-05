@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>使用WebGL画海浪点</title>
+    <script src="./gl-matrix-min.js"></script>
+    <script src="./utils.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body onload="onInit()">
+    <canvas id="webgl" width="500" height="500"></canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+            attribute vec3 position;
+            attribute float scale;
+            attribute vec3 color;
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+            varying vec3 vColor;
+      void main() {
+          vec4 mvPosition = uModelViewMatrix * vec4( position, 1.0 );
+          gl_PointSize = scale * ( 300.0 / - mvPosition.z );
+          gl_Position = uProjectionMatrix * mvPosition   ;
+          vColor=color;
+      }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+            precision highp float;
+            varying vec3 vColor;
+      void main() {
+          if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard;
+          gl_FragColor = vec4( vColor, 1.0 );
+      }
+    </script>
+    <script>
+      function onInit() {
+        //获取webgl
+        var gl = initGl('webgl');
+        var program = initShaderProgram(
+          gl,
+          document.getElementById('vertexShader').innerText,
+          document.getElementById('fragmentShader').innerText
+        );
+
+        const SEPARATION = 100,
+          AMOUNTX = 50,
+          AMOUNTY = 50;
+        const numParticles = AMOUNTX * AMOUNTY;
+        var count = 0;
+        const positions = new Float32Array(numParticles * 3);
+        const scales = new Float32Array(numParticles);
+        const colors = new Float32Array(numParticles * 3);
+        function createPoints() {
+          let i = 0,
+            j = 0;
+          for (let ix = 0; ix < AMOUNTX; ix++) {
+            let c = [Math.random(), Math.random(), Math.random()];
+            for (let iy = 0; iy < AMOUNTY; iy++) {
+              positions[i] = ix * SEPARATION - (AMOUNTX * SEPARATION) / 2; // x
+              positions[i + 1] = 0; // y
+              positions[i + 2] = iy * SEPARATION - (AMOUNTY * SEPARATION) / 2; // z
+
+              scales[j] = 1;
+              colors[i] = c[0];
+              colors[i + 1] = c[1];
+              colors[i + 2] = c[2];
+
+              i += 3;
+              j++;
+            }
+          }
+        }
+        createPoints();
+        function movePoints() {
+          let i = 0,
+            j = 0;
+
+          for (let ix = 0; ix < AMOUNTX; ix++) {
+            for (let iy = 0; iy < AMOUNTY; iy++) {
+              positions[i + 1] =
+                Math.sin((ix + count) * 0.3) * 50 + Math.sin((iy + count) * 0.5) * 50;
+
+              scales[j] =
+                (Math.sin((ix + count) * 0.3) + 1) * 20 + (Math.sin((iy + count) * 0.5) + 1) * 20;
+
+              i += 3;
+              j++;
+            }
+          }
+        }
+
+        function animate() {
+          cleanGl(gl);
+
+          var projectionMatrix = initProjectionMatrix(gl);
+
+          const modelViewMatrix = mat4.create();
+
+          mat4.translate(
+            modelViewMatrix, // destination matrix
+            modelViewMatrix, // matrix to translate
+            [-0.0, 0.0, 300.0]
+          ); // amount to translate
+
+          gl.uniformMatrix4fv(
+            gl.getUniformLocation(program, 'uModelViewMatrix'),
+            false,
+            modelViewMatrix
+          );
+
+          movePoints();
+
+          initArrBuffer(gl, 'position', positions, 3);
+          initArrBuffer(gl, 'color', colors, 3);
+          initArrBuffer(gl, 'scale', scales, 1);
+
+          //画点
+          gl.drawArrays(gl.POINTS, 0, scales.length);
+          count += 0.1;
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+    </script>
+  </body>
+</html>
