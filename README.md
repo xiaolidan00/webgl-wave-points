@@ -1,6 +1,10 @@
+---
+theme: cyanosis
+---
+
 这是 THREE.js 官方的一个经典示例，改用 webgl 实现，通过这个示例来更好地学会在 webgl 画点
 
-## Three.js 官方示例
+## Three.js 官方示例-波浪点
 
 https://threejs.org/examples/#webgl_points_waves
 
@@ -41,6 +45,32 @@ function loadShader(gl, type, source) {
 
   return shader;
 }
+```
+
+```c++
+       attribute vec3 position;
+            attribute float scale;
+            attribute vec3 color;
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+            varying vec3 vColor;
+      void main() {
+          vec4 mvPosition = uModelViewMatrix * vec4( position, 1.0 );
+          //根据距离远近显示点的大小
+          gl_PointSize = scale * ( 300.0 / - mvPosition.z );
+          gl_Position = uProjectionMatrix * mvPosition   ;
+          vColor=color;
+      }
+```
+
+```c++
+precision highp float;
+            varying vec3 vColor;
+      void main() {
+      //超过一定视觉范围内，不显示
+          if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard;
+          gl_FragColor = vec4( vColor, 1.0 );
+      }
 ```
 
 ## 3.初始化 program
@@ -207,3 +237,7 @@ function animate() {
   requestAnimationFrame(animate);
 }
 ```
+
+## github 代码地址
+
+https://github.com/xiaolidan00/webgl-wave-points
